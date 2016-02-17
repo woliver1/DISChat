@@ -1,4 +1,15 @@
+/*
+ * DisChatUserList
+ * 
+ * Version 0.1
+ * 17/2/16
+ *
+ * Copyright (c) 2015, William Oliver. All rights reserved.
+ *
+ * This work is licensed under the GPL Version 3 open source license, available
+ * at http://www.gnu.org/licenses/
 
+*/
 package woliver.dischat;
 
 import edu.nps.moves.dis.EntityID;
@@ -11,11 +22,6 @@ import org.apache.logging.log4j.Logger;
 /**
  * Maintains a list of chat users.
  * 
- * Copyright (c) 2015, William Oliver. All rights reserved.
- *
- * This work is licensed under the GPL Version 3 open source license, available
- * at http://www.gnu.org/licenses/
- *
  * @author William Oliver
  * @version 0.1
  */
