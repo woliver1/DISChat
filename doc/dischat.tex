@@ -1,0 +1,418 @@
+%% 
+%
+% -----< P R E A M B L E >-----
+%
+\documentclass[12pt]{article}
+%
+% ----- Packages
+%
+%\usepackage[utf8]{inputenc}
+\usepackage{algorithm}
+\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{setspace}
+\usepackage{minted}    % Source highlighing
+\usepackage{longtable}
+\usepackage{multirow}
+%
+% -----< E N D   P R E A M B L E >-----
+%
+%
+% -----< B E G I N   D O C U M E N T >-----
+%
+\begin{document}
+%
+% ----- Define new commands here.
+% 
+\doublespacing
+%
+% ----- Start the frontmatter
+%
+\author{William Oliver}
+%\date
+\title{A Proposal for a simple DIS chat protocol.}
+\maketitle
+\tableofcontents
+%\listoffigures
+%\listoftables
+%\listoflistings
+%
+% ----- Start of the Contents
+%
+\section{Introduction}
+\label{sec:intro}
+During the setup and conduct of distributed simulation exercises there
+is often a need to communicate with the other participants. When the
+other participants are remotly located there may be severe
+restrictions on the network protocols permitted. Typically the DIS
+network connectivity is available early in the network testing and
+configuring other communications devices, VoIP, VTC and DIS radios can
+take some time.  A simple DIS based chat system would allow simple
+communication without requireing changes to the network design. Given
+that DIS is, by its nature, distributed --- that is, without a client
+server architecture, the chat client was designed to similarly be
+serverless.
+
+\section{Outline}
+\label{sec:outline}
+
+The broad outline is to use DIS PDUs to transmit chat messages. As DIS
+is commonly used on multicast or broadcast networks there is no need
+to have a server, clients simply broadcast messages and listen on the
+broadcast address for messages.
+
+To create a useful prototype in a reasonable time frame, and to allow
+others to easily write their own implimentation\footnote{This is
+  especially important in military simulations, as security
+  restrictions may make it hard for third party software to be
+  installed.} a very simple protocol was developed.
+
+Chat clients show the user two things, a list of users and a message
+window. Chat protocols also usually allow two users to talk to one
+another, and to chat in a room. Three things then are required to be
+communicated, a sender, a recipient --- chat rooms can be represented
+by a recipient --- and the message. To keep the protocol simple we
+have chosen to use only one kind of PDU, the comment PDU. A Variable
+Datum Record can be used to encode the data we want, the message. The
+sender and recipient can be efficiently represented as DIS entity ids,
+these are already in the comment PDU for both the sender and
+recipient. As a convienience we use a variable datum to put a human
+readable username which is associated with the DIS id. For our proof
+of concept we did not impliment any chat rooms, noting that there are
+effectivly chat rooms, one for the all sites (0:0:0) one for the all
+applications at a site (x:0:0) and one for all entities for an
+application (x:y:0). The rules for sending and receiving chat messages
+in/to chat rooms will be expanded in future versions.
+
+\section{Design}
+\label{sec:design}
+To create a prototype application as quickly as possible OpenDIS was
+used and useful code snippets were taken from another project.
+another project.
+
+\subsection{GUI}
+\label{sec:gui}
+A Graphical User Interface was creted using the GUI builder tool in
+Netbeans --- a standard swing/awt program, shown below.
+
+\begin{figure}[!hbp]
+\includegraphics[scale=0.4]{graphics/gui.png}
+\caption{DISChat Graphical User Interface.}
+\end{figure}
+
+\subsection{Software Design}
+\label{sec:software-design}
+The design was borrowed from another DIS application that was required
+to handle a high load, the chat application in not anticipated to
+handle high packet load, but it was easiest to leave the design as
+is. The basic design is to use queues to move data between threads
+that perform specific tasks. Two network threads are spawned, one for
+receiving and one for sending. The receiving thread receives a packet
+and puts it into a receive queue and immediately returns to waiting on
+the network. Another thread reads from the receive queue and
+determines if we received a valid comment pdu --- if yes, extract the
+message and display it in the GUI if not, discard, then return to
+monitoring the queue. The sending queue waits for the GUI to send it a
+message, marshalls it, and sends it.
+
+\subsubsection{Network Thread}
+\label{sec:network-thread}
+
+TODO - split the above section into these sub headings.
+
+\subsubsection{PDU hadnling}
+\label{sec:pdu-handling}
+
+\section{Alternatives}
+\label{sec:alternatives}
+
+A number if alternative designs were considered.  First, using SISO-J
+messages as Link 16 has a chat protocol which could be re-used. This
+however, would be a complicated protocol, as you would need to both
+decode the DIS protocol and then appropriate SISO-J/link messages.
+%
+\\
+\textbf{pros} \\
+potentially compatible with real tactical chat networks.
+%
+\\
+\textbf{cons} \\
+complicated implimentation, limited implimentation outside the air
+domain.
+
+We also considered implimenting chat using a transmitter pdu
+to represent the client, and signal pdus for the actual communication,
+similar to the SISO-J protocol above, but without the overhead of the link
+protocol.
+%
+\\
+\textbf{pros} \\
+similar to the way other communictations in DIS works.
+%
+\\
+\textbf{cons} \\
+requires two pdus.
+
+\section{Further Work}
+\label{sec:further-work}
+We have implemented only a very basic chat client, and simple issuance
+and receipt rules. There are a number of ways we could extend the
+utility of the system. One would be to impliment chat rooms. This
+could be done by using the DIS entity id to create new rooms, a name
+would need to be associated with the room id and the client would need
+a way of adding that id as messages it wants to receive.
+
+A further improvement would be the ability to transfer files. This
+should be fairly simple to do, split a file into chuncks of $x$ bytes,
+put them in a pdu with some form of sequence identifier ( as you would
+need to reassemble in order). The hard bit would be implimenting a
+protocol for requesting missing sections (UDP being an unreliable
+protocol). It is worh noting that file transfer is equally faesable
+for both plain text and binary as the Variable Datum Record is
+agnostic to its contents
+
+\section{User Guide}
+\label{sec:user-guide}
+
+\subsection{Launching the Client}
+\label{sec:launching}
+
+\begin{verbatim}
+cd DISChat
+java -jar target\DISChat.jar
+\end{verbatim}
+
+\subsection{Connecting the Client}
+\label{sec:connecting}
+
+\section{Issuance Rules}
+\label{sec:issuance-rules}
+
+Once a connection has been established (see
+section\ref{sec:connecting}) the client sends a comment PDU with the
+\emph{exercise id}, the source \emph{site, application} and
+\emph{entity id} set and the \emph{variable datum}
+600001\footnote{Please not that the datum ids of 600001 and 60002 hold
+  no significance and should eventually be aggreeed upon, by
+  convention at least} set to the users chosen \emph{username}. This
+information is then sent as a heartbeat even when no messages are
+being exchanged, this allows the other chat clients to build up a list
+of chat users. The heartbeat in the reference implimentation is 5
+seconds. No other Datum Record or Vaiable Datum Record is to be set in
+the PDU.
+
+When a message is ready to send, a comment PDU containing the
+\emph{exercise id}, the source and destiation \emph{site, application
+  and entity id}s, the \emph{variable datum} 600001 set to the users
+chosen \emph{username} and the the \emph{variable datum} 600002
+containing the message, is sent. No other Datum Record or Vaiable
+Datum Record is to be set in the PDU.
+
+In this version of the chat client the destination address makes
+\emph{no} difference. All client should listen to all
+messages.\footnote{In future versions the ability to specify
+  indiviauals (\emph{entity id}), sites (\emph{site id}) and other
+  combinations will be made available. At present this is just a proof
+  of concept.}
+
+
+\section{Receipt Rules}
+\label{sec:receipt-rules}
+
+On receipt of a comment PDU the presence of \emph{Variable Datum
+  Record} 600001 indicates that the PDU is a chat PDU, the presence of
+both a 600001 and 600002 record indicates that it is a chat PDU with a
+message.  No other Datum or Variable Datum Records should be present in
+the PDU. If there are, they are to be ignored, and optionally the PDU
+is to be logged as malformed. The \emph{exercise id} and the \emph{source id} are to
+be extracted, along with the \emph{username} (the 600001 variable datum). If
+the \emph{exercise id} matches that of the active exercise the \emph{source id} with
+its associated username is to be added to a list representing all chat
+users in the current exercise.  An exercise id of 0 is to be
+interpreted as meaning that the message is for everyone regardless of
+which exercise thay are participating in.
+
+
+
+If a 600002 variable datum is present as well as the username, then
+the message is to be extracted and displayed. It is recommended that
+the standard chat convention of displaying the senders \emph{username}
+prefixed to the message be observed as this helps identify who the
+message is from\footnote{DIS ids not being the easiest for people to
+  identify.}. In our implimentation the convention is to display the
+DIS id with the username in parantheses, followed by a colon, a space
+and the message, as shown.
+\begin{verbatim}
+1:2:3 (username): Message text goes here.
+\end{verbatim}
+
+\appendix
+
+\section{Structure of the Comment PDU}
+
+\begin{table}
+  \centering
+  \begin{tabular}{l|l|l }
+    %\multicolumn{2}{c}{Comment PDU} \\
+    %\hline
+    %\endfirsthead
+    %Record Name & Field Name \\
+    %\hline \hline
+    %\endhead
+    \hline
+    Record Name                      &                                              & Field Name                       \\ \hline \hline
+    \multirow{8}{*}{PDU Header}      &                                              & Protocol Version                 \\
+                                     &                                              & Exercise ID                      \\
+                                     &                                              & PDU Type                         \\
+                                     &                                              & Protocol Family                  \\
+                                     &                                              & TimeStamp                        \\
+                                     &                                              & Length                           \\                    
+                                     &                                              & PDU Status                       \\                 
+                                     &                                              & Padding                          \\ \hline
+    \multirow{3}{*}{Originating ID}  &                                              & Site Number                      \\
+                                     &                                              & Application Number               \\
+                                     &                                              & Reference Number                 \\ \hline
+    \multirow{3}{*}{Receiving ID}    &                                              & Site Number                      \\
+                                     &                                              & Application Number               \\
+                                     &                                              & Reference Number                 \\ \hline
+    \parbox[t]{2mm}{\multirow{11}{*}{\rotatebox[origin=c]{90}{Datum Specification Record}}} & & Number of Fixed Datum Records    \\ 
+                                     &                                              & Number of Variable Datum Records \\ \cline{2-3}
+                                     & \multirow{4}{*}{\textit{Variable Datum \#1}} & Variable Datum ID                \\
+                                     &                                              & Variable Datum Length            \\
+                                     &                                              & Variable Datum Value             \\
+                                     &                                              & Padding to 64-bit boundary       \\ \cline{2-3}
+                                     & \multicolumn{1}{c|}{$\vdots$}               & \multicolumn{1}{c}{$\vdots$}   \\    \cline{2-3}
+                                     & \multirow{4}{*}{\textit{Variable Datum \#N}} & Variable Datum ID                \\
+                                     &                                              & Variable Datum Length            \\
+                                     &                                              & Variable Datum Value             \\
+                                     &                                              & Padding to 64-bit boundary       \\
+    \hline
+  \end{tabular}
+  \label{tbl:dis-comment-pdu}
+  \caption{Comment PDU} 
+\end{table} 
+\section{Testing Stuff}
+
+\begin{algorithm}
+\caption{My algorithm}\label{euclid}
+\begin{algorithmic}[1]
+\Procedure{CH\textendash Election}{}
+\State Broadcast HELLO message to its neighbor
+\EndProcedure
+\end{algorithmic}
+
+\end{algorithm}
+
+\section{Pseudocode}
+
+\begin{algorithm}
+  \caption{The \texttt{main} procedure of DISChat.}\label{alg:chatgui}
+  \begin{algorithmic}[1]
+    \Procedure{DISChat Main Procedure}{}
+    \State Constructor $\to$ new ChatController(chatTextArea, usersTextArea)
+    \State main $\to$ init GUI
+    \Loop
+    \State Check for input
+    \If {input is button press}
+    \State Call button action
+    \ElsIf {input is value entry}
+    \State Update value based on entry
+    \EndIf
+    \EndLoop
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+  \caption{The \texttt{ChatController} logic.}\label{alg:chatcontroller}
+  \begin{algorithmic}[1]
+    \Procedure{ChatController Object}{}
+    \State $pduQueue \gets LinkedBlockingQueue$
+    \State $sendQueue \gets LinkedBlockingQueue$
+    \State $disChatReceiver \gets DisChatReceiver$
+    \State $disChatThread \gets disChatReceiver\; as\; Thread$
+   
+    \State $senderId \gets EntityID$
+    \State $receiverId  \gets EntityID$
+    \State $userList \gets DisChatUserList$
+    \State $disChatThread \to start$
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+  \caption{The \texttt{connect} button logic.}\label{alg:connectbutton}
+  \begin{algorithmic}[1]
+    \Procedure{ChatController Object}{}
+    \State $senderId \gets$ GUI sender value
+    \State $receiverId \gets$ GUI receiver value
+    \State $username \gets$ GUI uesrname value
+    \State $exerciseid \gets$ GUI exercise ID value
+    \State $ip \gets$ GUI IP address value
+    \State $port \gets$ GUI Port value
+    \If {$state_{button}$ is selected}  
+      \State $success \gets (chatcontroller \to connectsocket$ with $ip$, $port)$
+      \If {$success$ is $true$}
+        \State $button\; text \gets $ Disconnected
+      \Else
+        \State $button\; text \gets $ Connect \Comment{Set button to initial state to note we have failed}
+      \EndIf
+    \EndIf
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+  \caption{The DisReceiver}\label{alg:disreceiver}
+  \begin{algorithmic}[1]
+    \Procedure{DIS Receiver}{}
+    \State $init pduQueue$
+    \State $packet \gets (socket \to receive)$
+    \If {$(packet \to data)$ is $DIS PDU$}
+      \State $disobject \gets pdu$ and $time$
+      \State $disobject \to pduQueue$
+    \State 
+    \EndProcedure
+  \end{algorithmic}
+\end{algorithm}
+
+\section{Listings}
+% Define background colour to make listings stand out a bit.
+\definecolor{bg}{rgb}{0.95,0.95,0.95}
+%\begin{listing}[H]
+%  \inputminted[linenos,bgcolor=bg]{java}{../src/main/java/woliver/dischat/ChatController.java}
+%  \caption{ChatController Class.}
+%  \label{lst:chatcontroller}
+%\end{listing}
+
+\begin{listing}[H]
+
+   \begin{minted}[linenos,fontsize=\footnotesize]{java}
+public void sendButtonPressed(String message) {
+    logger.entry(message);
+    DisChatMessage chatmsg;
+    chatmsg = new DisChatMessage();
+    if (message.trim().length() > 0)  {
+        chatmsg.setMessage(message);
+        chatmsg.setSenderId(this.senderId);
+        chatmsg.setReceiverId(this.receiverId);
+        chatmsg.setSendername(this.username);
+        chatmsg.setExerciseId(this.exerciseId);
+        logger.debug("Send button pressed - message is {}", message);
+        messageReceived(chatmsg); /* Sends message to message area */
+
+        try {
+            this.sendQueue.put(chatmsg);
+        } catch (InterruptedException ex) {
+            logger.error("FIXME - unable to queue message!", ex);
+        }
+    } else {
+        logger.warn("Invalid message --- ({}).", message);
+    }
+    logger.exit();
+}
+   \end{minted}
+   \caption{Java method to respond to Send button}
+   \label{lst:awk-script}
+\end{listing}
+\end{document}
