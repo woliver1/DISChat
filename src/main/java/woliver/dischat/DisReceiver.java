@@ -1,5 +1,13 @@
 /*
- * TODO --- merge with DisScenario DisReceiver. 90% the same
+ * DisReceiver
+ *
+ * Version 0.1
+ * 17/2/16
+ *
+ * Copyright (c) 2015, William Oliver. All rights reserved.
+ *
+ * This work is licensed under the GPL Version 3 open source license, available
+ * at http://www.gnu.org/licenses/
  */
 
 package woliver.dischat;
@@ -16,11 +24,6 @@ import org.apache.logging.log4j.Logger;
 /**
  * Class to get a datagram, see if its a PDU and pass it to a queue.
  * 
- * Copyright (c) 2015, William Oliver. All rights reserved.
- *
- * This work is licensed under the GPL Version 3 open source license, available
- * at http://www.gnu.org/licenses/
- *
  * @author William Oliver
  * @version 0.1
  */
