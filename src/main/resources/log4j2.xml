@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+        <File name="file" filename="dischat.log">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </File>
+        
+        <File name="testingfile" filename="testing.log">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </File>
+    </Appenders>
+    <Loggers>
+        <!-- ChatController Logger -->
+        <Logger name="com.mycompany.killmegui.ChatController" level="trace" additivity="true">
+            <AppenderRef ref="testingfile"/>
+        </Logger>   
+        <Root level="debug">
+            <AppenderRef ref="Console" level="debug"/>
+            <AppenderRef ref="file" level="debug"/>
+        </Root>
+    </Loggers>
+</Configuration>
